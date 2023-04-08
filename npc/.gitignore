@@ -9,3 +9,5 @@
 !*.cpp
 !.gitignore
 !README.md
+*obj_dir
+# wave.vcd 我也不提交了，害怕这个文件很大
