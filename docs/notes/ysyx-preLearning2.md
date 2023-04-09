@@ -91,6 +91,8 @@ verilator --version
 2. 官网：差别是没有切换分支，切换分支才能下载4.210这个版本https://verilator.org/guide/latest/install.html
 
 > 2023/04/08：这一点我在重复安装的时候就发现去年此时没有checkout。
+>
+> 以及这部分的代码放在verilator_test_porj中的00test_our中。
 
 ## 3. Verilator 的使用
 
@@ -108,7 +110,7 @@ module our_OnOff(
 endmodule
 ```
 
-> 2023/04/09，很明显，这是一个与门，ysyx官方文档中叫他双控门。为了区分，我没有使用top.v来命名，使用的是our_OnOff.v。
+> 2023/04/09，很明显，这是一个异或门，ysyx官方文档中叫他双控门。为了区分，我没有使用top.v来命名，使用的是our_OnOff.v。
 
 main.cpp编写：
 
@@ -174,6 +176,8 @@ int main(int argc,char **argv){
 
 ![3](pics/prelearn2/verilator-c-example.png)
 
+以及理解一下verilator的cpp代码：
+
 ## 4. GTKWave 查看波形
 
 =============2023/04/08，从这里重新开始==============
@@ -193,6 +197,8 @@ apt-get install gtkwave
 而波形文件产生在test_wave文件夹下。直接双击这个wave.vcd即可打开GTKWave，跟Modelsim一样，将信号拖入右侧，即可看到对应的波形：
 
 ![6](pics/prelearn2/wave.png)
+
+> 补充：要想在终端打开GTKWave，`gtkwave wave.vcd`即可。
 
 ## 5. 一键仿真：编写Makefile
 
@@ -259,7 +265,6 @@ include ../Makefile
 
 > makefile 还是写的比较丑，我记得 -Wall --cc --exe --build 这种都是可以写别名的。
 
-
 ## 6. 接入NVBoard
 
 [NVBoard](https://github.com/NJU-ProjectN/nvboard.git)(NJU
@@ -272,3 +277,202 @@ bash init.sh nvboard
 ```
 
 上面这个命令其实就是git获得nvboard的源代码并完成配置，可以通过查看源码来理解nvboard是怎么工作的（毕竟是南大同学写出来的）。
+
+### 6.1 运行示例
+
+nvboard的example文件夹下有一个示例项目：切到该目录，根据readme指引安装依赖库 `apt-get install libsdl2-dev libsdl2-image-dev`，执行 `make run`即可运行。
+
+![7](pics/prelearn2/nvboard-example.png)
+
+该示例的演示效果如下:
+
+1. 左边8个LED为流水灯效果
+2. 拨动右边的8个拨码开关, 可控制对应LED的亮灭
+3. 8个数码管流水显示数字0-7
+4. 按钮暂无展示效果
+5. 窗口右侧为VGA输出, 将会展示一张图片
+6. 敲击键盘, 终端将会输出按键的扫描码
+
+### 6.2 NVBoard 如何工作
+
+ysyx官方文档上推荐从make入手查看代码结构。也正好经过前面自己编写makefile的过程（感觉自己通过makefile掌控代码编译结构的能力还是太弱）。看看同类型更复杂的项目是怎么写的makefile。
+
+#### A. makefile 回顾学习
+
+觉得这里得沉得住气，得好好翻翻资料，不能浮光掠影自欺欺人。这里想写一个笔记，另开一个笔记。
+
+* [GNU-Make 文档](https://www.gnu.org/software/make/manual/make.html)
+* [跟我一起写Makefile](https://github.com/seisman/how-to-write-makefile)
+
+> 之前写操作系统的时候好像还有一个文档，写的也不错，回头再找找。
+
+#### B. NVBoard的Makefile
+
+确实，通过Makefile很容易理清楚每一块代码的意思。先通过ChatGPT来解析一下NVBoard的Makefile：
+
+> 这是一个Makefile，用于构建和模拟使用Verilator的Verilog项目。以下是Makefile不同部分的简要概述：
+>
+> ```
+> TOPNAME = top
+> ```
+>
+> 定义了顶层模块的名称。
+>
+> ```
+> NXDC_FILES = constr/top.nxdc
+> ```
+>
+> 定义了项目使用的约束文件列表。
+>
+> ```
+> INC_PATH ?=
+> ```
+>
+> 定义了包含应在编译期间包含的头文件的目录的列表。
+>
+> ```
+> VERILATOR = verilator
+> ```
+>
+> 定义了Verilator可执行文件的名称。
+>
+> ```
+> VERILATOR_CFLAGS += -MMD --build -cc  \
+> 				-O3 --x-assign fast --x-initial fast --noassert
+> ```
+>
+> 定义了传递给Verilator的编译选项列表。
+>
+> ```
+> BUILD_DIR = ./build
+> OBJ_DIR = $(BUILD_DIR)/obj_dir
+> BIN = $(BUILD_DIR)/$(TOPNAME)
+> ```
+>
+> 定义了构建工件将存储在的目录、Verilator将存储对象文件的目录和由Verilator生成的可执行文件的路径。
+>
+> ```
+> default: $(BIN)
+> ```
+>
+> 定义了默认目标，即运行make命令时将构建的目标。
+>
+> ```
+> $(shell mkdir -p $(BUILD_DIR))
+> ```
+>
+> 如果构建目录不存在，则创建构建目录。
+>
+> ```
+> SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
+> $(SRC_AUTO_BIND): $(NXDC_FILES)
+> 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+> ```
+>
+> 定义了一个名为SRC_AUTO_BIND的变量，其中包含一个Python脚本生成的用于自动绑定引脚映射信息的C++源代码文件的路径。
+>
+> ```
+> VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
+> CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+> CSRCS += $(SRC_AUTO_BIND)
+> ```
+>
+> 定义了项目使用的所有Verilog和C/C++源代码文件的列表。
+>
+> ```
+> include $(NVBOARD_HOME)/scripts/nvboard.mk
+> ```
+>
+> 包含了用于构建项目的其他规则和变量的文件。
+>
+> ```
+> INCFLAGS = $(addprefix -I, $(INC_PATH))
+> CFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
+> LDFLAGS += -lSDL2 -lSDL2_image
+> ```
+>
+> 定义了Verilator编译期间的一些选项和标志。
+>
+> ```
+> $(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
+> 	@rm -rf $(OBJ_DIR)
+> 	$(VERILATOR) $(VERILATOR_CFLAGS) \
+> 		--top-module $(TOPNAME) $^ \
+> 		$(addprefix -CFLAGS , $(CFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
+> 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
+> ```
+>
+> 定义了用于构建可执行文件的规则。
+>
+> ```
+> all: default
+> ```
+>
+> 定义了“all”别名，它是默认目标的一个别名。
+>
+> ```
+> run: $(BIN)
+> 	@$^
+> ```
+>
+> 运行由Verilator生成的可执行文件。
+>
+> ```
+> clean:
+> ```
+
+这里有一些额外的说明：
+
+* 这个 Makefile 使用了一些 Makefile 变量和函数。例如，$(shell …) 函数用于运行 shell 命令并将其输出作为 Makefile 变量的值返回。
+* 这个 Makefile 还包含了一个包含在 nvboard.mk 中的 Makefile，该 Makefile 提供了一些特定于该项目的规则和变量。
+* 这个 Makefile 还包含了一些逻辑和变量，用于在构建时自动绑定约束文件中指定的引脚到适当的逻辑单元上。这是通过运行一个名为 auto_pin_bind.py 的 Python 脚本来实现的。
+
+总之，这个 Makefile 定义了一些变量，包括目标文件、源文件和库文件，然后使用这些变量来构建可执行文件。在构建过程中，它调用了Verilator 和一些其他命令来编译和链接源代码，并最终生成了一个可执行文件。最后，Makefile还定义了一些其他目标，如运行可执行文件、清除构建目录等。
+
+#### C. NVBoard 的一些函数
+
+### 6.4 实现双控开关
+
+主要是理解NVBoard是如何工作的，这样才可以根据其框架编写cpp代码。不过其实查看example的源码就可以大致知道是如何工作的。cpp代码如下，基本是仿照example里的main.cpp来的，一些不理解的函数，看看example也大致知道是什么意思：
+
+```C++
+#include <nvboard.h>
+#include "Vdouble_control.h"
+
+static TOP_NAME dut;
+
+void nvboard_bind_all_pins(Vdouble_control* double_control);
+
+int main() {
+    nvboard_bind_all_pins(&dut);
+    nvboard_init();
+
+    while (1) {
+        nvboard_update();
+        dut.eval();
+    }
+
+    nvboard_quit();
+}
+
+```
+
+此外还需要一个规则约束文件，我的double_control.nxdc文件放在constr下：
+
+```
+top=double_control
+
+a SW0
+b SW1
+f LD0
+```
+
+### 6.5 流水灯
+
+作为曾经的"点灯大师"，我自信能够基于双控门直接搞出NVBoard流水灯（doge）。
+
+代码在05nvboard_light中。逻辑还是比较简单的。
+
+> 做到这里，才发现网站现在有课程：[指路](https://ysyx.oscc.cc/docs/schedule.html)！！！回头再看一遍这个课。
+
+![img](pics/prelearn2/light.png)
