@@ -1,0 +1,6 @@
+top=timer
+
+control (SW2, SW1, SW0)
+out_seg1 (SEG0G, SEG0F, SEG0E, SEG0D, SEG0C, SEG0B, SEG0A)
+out_seg2 (SEG1G, SEG1F, SEG1E, SEG1D, SEG1C, SEG1B, SEG1A)
+finished LD0
