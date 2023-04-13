@@ -1,5 +1,5 @@
-TOPNAME = timer
-NXDC_FILES = constr/timer.nxdc
+TOPNAME = regs_top
+NXDC_FILES = constr/regs_top.nxdc
 INC_PATH ?=
 
 VERILATOR = verilator
