@@ -1,17 +1,17 @@
 #include <nvboard.h>
-#include "Vregs_top.h"
+#include "Vlfsr_random.h"
 
-static TOP_NAME dut;
+TOP_NAME top;
 
-void nvboard_bind_all_pins(Vregs_top* regs_top);
+void nvboard_bind_all_pins(Vlfsr_random* top);
 
 static void single_cycle() {
-    dut.clk = 0;dut.eval();
-    dut.clk = 1;dut.eval();
+    top.clk = 0;top.eval();
+    top.clk = 1;top.eval();
 }
 
 int main() {
-    nvboard_bind_all_pins(&dut);
+    nvboard_bind_all_pins(&top);
     nvboard_init();
 
     while(1) {
