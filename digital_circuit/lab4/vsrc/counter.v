@@ -15,8 +15,6 @@ module counter (
     // reg [0:0] led = 0;
 
     always @(posedge clk) begin
-        
-        /* verilator lint_off CASEINCOMPLETE */
         case(control)
             3'b001: // start
                 if (ones_count == 9) begin

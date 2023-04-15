@@ -1,5 +1,5 @@
-TOPNAME = regs_top
-NXDC_FILES = constr/regs_top.nxdc
+TOPNAME = lfsr_random
+NXDC_FILES = constr/lfsr_random.nxdc
 INC_PATH ?=
 
 VERILATOR = verilator

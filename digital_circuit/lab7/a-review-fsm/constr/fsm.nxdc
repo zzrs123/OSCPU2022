@@ -1,0 +1,7 @@
+top = fsm
+
+clk BTNC
+reset_n SW0
+in_data SW1
+out_data LD0
+out_led (LD7,LD6,LD5,LD4)

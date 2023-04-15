@@ -1,5 +1,5 @@
-TOPNAME = regs_top
-NXDC_FILES = constr/regs_top.nxdc
+TOPNAME = ps2
+NXDC_FILES = constr/ps2.nxdc
 INC_PATH ?=
 
 VERILATOR = verilator
