@@ -1,62 +1,74 @@
-module ps2_keyboard(clk,clrn,ps2_clk,ps2_data,data,
-                    ready,nextdata_n,overflow);
-    input clk,clrn,ps2_clk,ps2_data;
-    input nextdata_n;
-    output [7:0] data;
-    output reg ready;
-    output reg overflow;     // fifo overflow
-    // internal signal, for test
-    reg [9:0] buffer;        // ps2_data bits
-    reg [7:0] fifo[7:0];     // data fifo
-    reg [2:0] w_ptr,r_ptr;   // fifo write and read pointers
-    reg [3:0] count;  // count ps2_data bits
-    // detect falling edge of ps2_clk
-    reg [2:0] ps2_clk_sync;
-
+// 手册上的代码格式很乱，这份就是整理了一下
+// 顺便理解一下代码
+module ps2_keyboard(
+    input wire [0:0] clk,
+    input wire [0:0] clrn,
+    input wire [0:0] ps2_clk,
+    input wire [0:0] ps2_data,
+    input wire [0:0] nextdata_n,
+    output reg [7:0] data,
+    output reg [0:0] ready,
+    output reg [0:0] fifo_overflow,
+    output reg [9:0] buffer,
+    output reg [7:0] fifo_list[7:0],
+    output reg [2:0] w_ptr,
+    output reg [2:0] r_ptr,
+    output reg [3:0] count,
+    output reg [2:0] ps2_clk_sync 
+);
     /*
-     ps2_clk_sync记录PS2时钟信号的历史信息，
-     并检测时钟的下降沿，当发现下降沿时将sampling置1。
+        ps2_clk_sync记录PS2时钟信号的历史信息，
+        并检测时钟的下降沿，当发现下降沿时将sampling置1。
+        sampling置为1时符合ps2时序约束，才能开始存储ps2数据
     */
+
     always @(posedge clk) begin
-        ps2_clk_sync <=  {ps2_clk_sync[1:0],ps2_clk};
+        ps2_clk_sync <= {ps2_clk_sync[1:0],ps_clk};
     end
     wire sampling = ps2_clk_sync[2] & ~ps2_clk_sync[1];
 
     /*
-    开始逐位接收数据并放入缓冲区fifo队列,
-    收集完11个bit后将缓冲区转移至数据队列fifo。
+        开始逐位接收数据并放入缓冲区fifo队列,
+        收集完11个bit后将缓冲区转移至数据队列fifo。
     */
     always @(posedge clk) begin
-        if (clrn == 0) begin // reset
-            count <= 0; w_ptr <= 0; r_ptr <= 0; overflow <= 0; ready<= 0;
+        // 清零重置
+        if (clrn == 0) begin
+            count <= 0;
+            w_ptr <= 0;
+            r_ptr <= 0;
+            fifo_overflow <= 0;
+            ready<= 0;
         end
         else begin
-            if ( ready ) begin // read to output next data
-                if(nextdata_n == 1'b0) //read next data
-                begin
+            // 读取逻辑
+            if (ready) begin
+                if(nextdata_n == 1'b0) begin
                     r_ptr <= r_ptr + 3'b1;
-                    if(w_ptr==(r_ptr+1'b1)) //empty
+                    if(w_ptr == (r_ptr + 1'b1))
                         ready <= 1'b0;
                 end
             end
+            // 写逻辑
             if (sampling) begin
-              if (count == 4'd10) begin
-                if ((buffer[0] == 0) &&  // start bit
-                    (ps2_data)       &&  // stop bit
-                    (^buffer[9:1])) begin      // odd  parity
-                    fifo[w_ptr] <= buffer[8:1];  // kbd scan code
-                    w_ptr <= w_ptr+3'b1;
-                    ready <= 1'b1;
-                    overflow <= overflow | (r_ptr == (w_ptr + 3'b1));
+                // 如果count==10，
+                if (count == 4'd10) begin
+                    if ((buffer[0] == 0) &&
+                        (ps2_data)      &&
+                        (&buffer[9:1])) begin
+                        fifo_list[w_ptr] <= buffer[8:1];
+                        w_ptr <= w_ptr+3'b1;
+                        ready <= 1'b1;
+                        fifo_overflow <= fifo_overflow | (r_ptr == (w_ptr + 3'b1))   
+                    end
+                    count <= 0;
+                end else begin
+                    buffer[count] <= ps2_data;
+                    count <= count + 3'b1;
                 end
-                count <= 0;     // for next
-              end else begin
-                buffer[count] <= ps2_data;  // store ps2_data
-                count <= count + 3'b1;
-              end
             end
         end
     end
-    assign data = fifo[r_ptr]; //always set output data
 
+    assign data = fifo_list[r_ptr];
 endmodule

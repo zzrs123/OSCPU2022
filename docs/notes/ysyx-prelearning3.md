@@ -470,6 +470,9 @@ keyboard_sim中，分别将ps2_keyboard_model和ps2_keyboard实例化，并连�
 
 所以我感觉这个系统需要分模块地单个测试，然后再连接起来调通。今天（0415）去做rustlings去了。
 
+
+0416回来继续理解这个ps2系统。单开一个小md文件来记录。
+
 ## 8. lab8: VGA
 
 ## 9. lab9: 字符输入
