@@ -11,3 +11,6 @@
 !.gitignore
 !init.sh
 /fceux-am
+nvboard/
+
+
