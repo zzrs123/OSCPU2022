@@ -1,21 +1,24 @@
+// 时序与读写逻辑模块ps2_keyboard.v
 // 手册上的代码格式很乱，这份就是整理了一下
 // 顺便理解一下代码
 module ps2_keyboard(
     input wire [0:0] clk,
     input wire [0:0] clrn,
-    input wire [0:0] ps2_clk,
+    input wire [0:0] ps2_clk,//后面似乎没用
     input wire [0:0] ps2_data,
     input wire [0:0] nextdata_n,
     output reg [7:0] data,
     output reg [0:0] ready,
     output reg [0:0] fifo_overflow,
-    output reg [9:0] buffer,
-    output reg [7:0] fifo_list[7:0],
-    output reg [2:0] w_ptr,
-    output reg [2:0] r_ptr,
-    output reg [3:0] count,
-    output reg [2:0] ps2_clk_sync 
+    
 );
+    // 2023/04/17 将这些移出module声明，不需要作为output
+    reg [9:0] buffer;
+    reg [7:0] fifo_list[7:0];
+    reg [2:0] w_ptr;
+    reg [2:0] r_ptr;
+    reg [3:0] count;
+    reg [2:0] ps2_clk_sync ;
     /*
         ps2_clk_sync记录PS2时钟信号的历史信息，
         并检测时钟的下降沿，当发现下降沿时将sampling置1。
@@ -71,4 +74,5 @@ module ps2_keyboard(
     end
 
     assign data = fifo_list[r_ptr];
+    
 endmodule
