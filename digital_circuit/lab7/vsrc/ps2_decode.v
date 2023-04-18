@@ -1,16 +1,17 @@
 // 键盘码的译码模块 ps2_keyboard_code.v
 // 将码翻译为ASCII
-module ps2_keyboard_code(
+module ps2_decode(
     input wire [7:0] in_data,
     output reg [7:0] out_code
 );
 // version1: without ctrl or shift
-    initial begin
-        reg [7:0] out_ascii=0; 
-    end    
-
+    // initial begin
+    //     reg [7:0] out_ascii=0; 
+    // end    
+/* verilator lint_off CASEINCOMPLETE */
+    reg [7:0] out_ascii;
     always @(*) begin
-        case(in_data) begin
+        case (in_data) 
             8'h16: out_ascii = 8'd49;//1
             8'h1e: out_ascii = 8'd50;//2
             8'h26: out_ascii = 8'd51;//3
@@ -48,5 +49,8 @@ module ps2_keyboard_code(
             8'h35: out_ascii = 8'd121; // y
             8'h1a: out_ascii = 8'd122; // z
 
-        end
+        endcase
     end
+    // 0418发现这一句没有写。
+    assign out_code = out_ascii;
+endmodule
