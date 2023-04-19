@@ -16,3 +16,4 @@ verilator_test_proj/**/obj_dir/
 
 
 /nvboard
+/am-kernels
